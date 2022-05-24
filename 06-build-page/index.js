@@ -43,38 +43,25 @@ function mergeCSS() {
 }
 
 function mergeHTML() {
+  fs.promises.readdir(path.join(__dirname, 'components'))
+    .then((files) => {
+      const components = files.filter((file) => path.extname(file) === '.html')
+        .map((file) => file.replace('.html', ''));
 
-  function getDataHTML(line) {
-
-    if (line.includes('{{')) {
-      
-      const fileName = line.trim().split('').filter(char => char !== '{' && char !== '}').join('');
-
-      fs.promises.readFile(path.join(__dirname, 'components', fileName + '.html'), 'utf-8')
-        .then(data => {
-          fs.promises.appendFile(path.join(__dirname, 'project-dist', 'index.html'), data + '\n');
-        })
-        .catch(err => console.log(err));
-    } else {
-      fs.promises.appendFile(path.join(__dirname, 'project-dist', 'index.html'), line + '\n');
-    }
-  }
-
-  fs.promises.readFile(path.join(__dirname, 'template.html'), 'utf-8')
-    .then(content => {
-      const contentArray = content.split('\n');
-      return contentArray;
-    })
-    .then(content => {
-      for (let i = 0; i < content.length; i += 1) {
-        getDataHTML(content[i]);
-      }
+      fs.promises.readFile(path.join(__dirname, 'template.html'), 'utf-8')
+        .then((templateContent) => {
+          return Promise.all(
+            components.map((component) =>
+              fs.promises.readFile(path.join(__dirname, 'components', `${component}.html`), 'utf-8')
+                .then((componentContent) => {
+                  templateContent = templateContent.replace(`{{${component}}}`, componentContent);
+                  return templateContent;
+                })
+            ));
+        }).then((templateContent) => {
+          fs.promises.writeFile(path.join(__dirname, 'project-dist', 'index.html'), templateContent.slice(-1)[0]);
+        });
     });
-}
-
-function createIndexHtml() {
-  fs.promises.writeFile(path.join(__dirname, 'project-dist', 'index.html'), '')
-    .catch(err => console.log(err));
 }
 
 fs.promises.rm(path.join(__dirname, 'project-dist'), { recursive: true, force: true })
@@ -82,7 +69,6 @@ fs.promises.rm(path.join(__dirname, 'project-dist'), { recursive: true, force: t
     fs.promises.mkdir(path.join(__dirname, 'project-dist', 'assets'),{ recursive: true })
       .then(() => copyFiles(path.join('assets')))
       .then(() => mergeCSS())
-      .then(() => createIndexHtml())
       .then(() => mergeHTML())
       .catch(err => console.log(err));
   });
