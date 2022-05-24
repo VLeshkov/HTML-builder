@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const copyFiles = async (dir) => {
+function copyFiles(dir) {
   fs.promises.readdir(path.join(__dirname, dir))
     .then((files) => {
       for (let file of files) {
@@ -13,13 +13,12 @@ const copyFiles = async (dir) => {
         });
       }
     });
-};
+}
 
-const duplicateDir = async (dir) => {
+function duplicateDir(dir) {
   fs.promises.mkdir(path.join(__dirname, `${dir}-copy`), {recursive: true})
     .then(() => copyFiles(dir));
-};
+}
 
-fs.promises.rm(path.join(__dirname, 'files-copy'), {recursive: true})
-  .then(() => duplicateDir('files'))
-  .catch(() => duplicateDir('files'));
+fs.promises.rm(path.join(__dirname, 'files-copy'), { recursive: true, force: true })
+  .then(() => duplicateDir('files'));
