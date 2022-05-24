@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const copyFiles = async (sourceDir) => {
+function copyFiles(sourceDir) {
   fs.promises.readdir(path.join(__dirname, sourceDir), {withFileTypes: true})
     .then((files) => {
       for (let file of files) {
@@ -19,15 +19,15 @@ const copyFiles = async (sourceDir) => {
         }
       }
     });
-};
+}
 
-const appendFileAsync = async (path, data) => {
+function appendIntoFile(path, data) {
   fs.appendFile(path, data, (err) => {
     if (err) console.log(err.message);
   });
-};
+}
 
-const mergeCSS = async () => {
+function mergeCSS() {
   fs.promises.readdir(path.join(__dirname, 'styles'))
     .then((files) => {
       for (let file of files) {
@@ -35,29 +35,16 @@ const mergeCSS = async () => {
           const bundlePath = path.join(__dirname, 'project-dist', 'style.css');
           const readStream = fs.createReadStream(path.join(__dirname, 'styles', file));
 
-          readStream.on('data', data => appendFileAsync(bundlePath, data));
+          readStream.on('data', data => appendIntoFile(bundlePath, data));
         }
       }
     })
     .catch((err) => console.log(err));
-};
+}
 
-const mergeHTML = async () => {
+function mergeHTML() {
 
-  const getDataHTML = async (line) => {
-
-    // let data;
-
-    // if (line.includes('{{')) {
-      
-    //   const fileName = line.trim().split('').filter(char => char !== '{' && char !== '}').join('');
-
-    //   fs.promises.readFile(path.join(__dirname, 'components', fileName + '.html'), 'utf-8')
-    //     .then(content => data = content)
-    //     .catch(err => console.log(err));
-    // } else {
-    //   data = line;
-    // }
+  function getDataHTML(line) {
 
     if (line.includes('{{')) {
       
@@ -71,11 +58,7 @@ const mergeHTML = async () => {
     } else {
       fs.promises.appendFile(path.join(__dirname, 'project-dist', 'index.html'), line + '\n');
     }
-
-    // console.log(data);
-
-    // return data + '\n';
-  };
+  }
 
   fs.promises.readFile(path.join(__dirname, 'template.html'), 'utf-8')
     .then(content => {
@@ -85,20 +68,21 @@ const mergeHTML = async () => {
     .then(content => {
       for (let i = 0; i < content.length; i += 1) {
         getDataHTML(content[i]);
-        // fs.promises.appendFile(path.join(__dirname, 'project-dist', 'index.html'), getDataHTML(content[i]));
       }
     });
-};
+}
 
-const createIndexHtml = async () => {
+function createIndexHtml() {
   fs.promises.writeFile(path.join(__dirname, 'project-dist', 'index.html'), '')
     .catch(err => console.log(err));
-};
+}
 
-fs.promises.mkdir(path.join(__dirname, 'project-dist', 'assets'),{recursive: true})
-  .then(() => copyFiles(path.join('assets')))
-  .then(() => mergeCSS())
-  .then(() => createIndexHtml())
-  .then(() => mergeHTML())
-  .catch(err => console.log(err));
-
+fs.promises.rm(path.join(__dirname, 'project-dist'), { recursive: true, force: true })
+  .then(() => {
+    fs.promises.mkdir(path.join(__dirname, 'project-dist', 'assets'),{ recursive: true })
+      .then(() => copyFiles(path.join('assets')))
+      .then(() => mergeCSS())
+      .then(() => createIndexHtml())
+      .then(() => mergeHTML())
+      .catch(err => console.log(err));
+  });
