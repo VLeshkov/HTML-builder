@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 
-const createBundleAsync = async () => {
+function createBundle() {
   const data = new Buffer.from('');
   const bundlePath = path.join(__dirname, 'project-dist', 'bundle.css');
   return new Promise (
@@ -10,15 +10,15 @@ const createBundleAsync = async () => {
       resolve();
     })
   );
-};
+}
 
-const appendFileAsync = async (path, data) => {
+function appendIntoFile(path, data) {
   fs.appendFile(path, data, (err) => {
     if (err) console.log(err.message);
   });
-};
+}
 
-createBundleAsync()
+createBundle()
   .then(
     fs.promises.readdir(path.join(__dirname, 'styles'))
       .then((files) => {
@@ -27,7 +27,7 @@ createBundleAsync()
             const bundlePath = path.join(__dirname, 'project-dist', 'bundle.css');
             const readStream = fs.createReadStream(path.join(__dirname, 'styles', file));
 
-            readStream.on('data', data => appendFileAsync(bundlePath, data));
+            readStream.on('data', data => appendIntoFile(bundlePath, data));
           }
         }
       })
